@@ -1,10 +1,10 @@
-# goose custom image: C / Java / Python 3.12 development environment.
+# goose custom image: C / Java / Python 3.11 development environment.
 #
 # Base: official goose image, with uv/uvx, chromium (browser extension),
 # and browser-harness. Layers add the native toolchains so recipes like
 # code-workflow (python3 -m pytest) and chores-workflow run inside.
 #
-# Python is unified on 3.12 (system + uv default) to avoid an mcp-server-fetch
+# Python is unified on 3.11 (system + uv default) to avoid an mcp-server-fetch
 # / anyio BrokenPipeError that triggers on Python 3.15 when a stdio client
 # disconnects before the server finishes initialising.
 #
@@ -49,22 +49,22 @@ RUN apt-get update \
          default-jdk-headless \
     && rm -rf /var/lib/apt/lists/*
 
-# Python 3.12 (system): unify on 3.12 to avoid mcp-server-fetch / anyio
+# Python 3.11 (system): unify on 3.11 to avoid mcp-server-fetch / anyio
 # BrokenPipeError that triggers on Python 3.15 when client disconnects early.
-# python3/python symlinks point at 3.12 so every toolchain shares one version.
+# python3/python symlinks point at 3.11 so every toolchain shares one version.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-         python3.12 python3.12-venv python3.12-dev python3-pip \
-    && ln -sf /usr/bin/python3.12 /usr/local/bin/python3 \
-    && ln -sf /usr/bin/python3.12 /usr/local/bin/python \
-    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 100 \
+         python3.11 python3.11-venv python3.11-dev python3-pip \
+    && ln -sf /usr/bin/python3.11 /usr/local/bin/python3 \
+    && ln -sf /usr/bin/python3.11 /usr/local/bin/python \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 100 \
     && rm -rf /var/lib/apt/lists/*
 
 # Python test tooling: required by code-workflow test_cmd (python3 -m pytest).
 RUN pip3 install --break-system-packages pytest
 
-# Browser-automation helper, pinned to the same 3.12 interpreter.
-RUN uv tool install --python 3.12 --upgrade --force browser-harness \
+# Browser-automation helper, pinned to the same 3.11 interpreter.
+RUN uv tool install --python 3.11 --upgrade --force browser-harness \
     && ln -sf /home/goose/.local/bin/browser-harness /usr/local/bin/browser-harness
 
 # Point uv at the goose-owned cache/tool dirs and use copy link mode.
