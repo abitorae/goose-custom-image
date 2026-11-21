@@ -150,10 +150,11 @@ RUN uv tool install --python 3.11 --force browser-harness && \
 # ---------------------------------------------------------------------------
 # Entrypoint script: start headless-shell in the background with CDP
 # on port 9222, wait for the port to be ready, then exec goose.
-# headless-shell is chrome-headless-shell: a standalone binary that does
-# not need --no-sandbox in a container (unlike full chromium, which runs
-# with setuid sandbox restrictions). --disable-dev-shm-usage is still
-# recommended because /dev/shm defaults to 64 MB in most containers.
+# headless-shell is chrome-headless-shell: a standalone binary that still
+# needs --no-sandbox in a non-root container without a seccomp profile
+# (the official chromedp run.sh uses --no-sandbox for the same reason).
+# --disable-dev-shm-usage is still recommended because /dev/shm defaults to
+# 64 MB in most containers, too small for Chromium rendering.
 # ---------------------------------------------------------------------------
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
 

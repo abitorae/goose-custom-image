@@ -6,6 +6,7 @@ set -euo pipefail
 # implicit. --disable-dev-shm-usage is kept because /dev/shm defaults to
 # 64 MB in most containers, too small for Chromium rendering.
 headless-shell \
+    --no-sandbox \
     --disable-gpu \
     --disable-dev-shm-usage \
     --remote-debugging-address=127.0.0.1 \
