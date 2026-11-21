@@ -31,7 +31,9 @@ FROM ghcr.io/astral-sh/uv:latest AS uv-bin
 FROM ghcr.io/aaif-goose/goose:latest
 
 # uv/uvx from the distroless image (recommended by the uv Docker guide).
-# NOTE: for reproducible builds, pin a version, e.g. ghcr.io/astral-sh/uv:0.13.9
+# NOTE: for reproducible builds, pin a version:
+#   COPY --from=ghcr.io/astral-sh/uv:0.13.9 /uv /uvx /bin/
+# Currently using :latest per requirement; pin before shipping.
 COPY --from=uv-bin /uv /uvx /bin/
 
 # Rely on uv's documented default storage paths. For the non-root `goose`
@@ -67,13 +69,22 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
-# browser-harness (headless browser automation) installed as a uv tool.
+# uv tools (headless browser automation + web fetch) installed as uv tools.
 # Runs as the goose user so all uv state lands goose-owned (no chown needed).
 # `--python 3.11` reuses the system Python 3.11 already installed above
-# (package requires >=3.11), avoiding a ~50MB managed CPython 3.12 download.
+# (browser-harness requires >=3.11; mcp-server-fetch requires >=3.11.5 but
+# uv 0.13.9 resolves against system 3.11.2 without a managed download),
+# avoiding a ~50MB managed CPython download.
+# NOTE: if a future uv strictly enforces requires-python, mcp-server-fetch
+# may fall back to a managed CPython download. Pin uv image tag (line 26)
+# for reproducible builds if needed.
+# ddgs (web-search skill backend) is pre-installed so temporary containers
+# do not re-download it on every session.
 # ---------------------------------------------------------------------------
 USER goose
-RUN uv tool install --python 3.11 --upgrade --force browser-harness && \
+RUN uv tool install --python 3.11 --force browser-harness && \
+    uv tool install --python 3.11 --force mcp-server-fetch && \
+    uv tool install --python 3.11 --force ddgs && \
     # Register the skill where goose discovers skills. `browser-harness skill`
     # already emits the full SKILL.md including its YAML frontmatter (name +
     # description), so redirect it directly — do NOT prepend another
@@ -84,6 +95,8 @@ RUN uv tool install --python 3.11 --upgrade --force browser-harness && \
     goose --version && \
     uv --version && \
     browser-harness --version && \
+    test -x /home/goose/.local/bin/mcp-server-fetch && \
+    test -x /home/goose/.local/bin/ddgs && \
     gcc --version | head -n1 && \
     g++ --version | head -n1 && \
     make --version | head -n1 && \
